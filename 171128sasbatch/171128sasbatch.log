@@ -1,0 +1,138 @@
+1                                                          The SAS System                             16:03 Wednesday, March 7, 2018
+
+NOTE: Unable to open SASUSER.REGSTRY. WORK.REGSTRY will be opened instead.
+NOTE: All registry changes will be lost at the end of the session.
+
+WARNING: Unable to copy SASUSER registry to WORK registry. Because of this, you will not see registry customizations during this 
+         session.
+NOTE: Unable to open SASUSER.PROFILE. WORK.PROFILE will be opened instead.
+NOTE: All profile changes will be lost at the end of the session.
+NOTE: Copyright (c) 2002-2012 by SAS Institute Inc., Cary, NC, USA. 
+NOTE: SAS (r) Proprietary Software 9.4 (TS1M1) 
+      Licensed to UNIVERSITY OF WISCONSIN - MILWAUKEE - SFA T&R, Site 70123871.
+NOTE: This session is executing on the X64_8PRO  platform.
+
+
+
+NOTE: Updated analytical products:
+      
+      SAS/STAT 13.1
+      SAS/ETS 13.1
+      SAS/OR 13.1
+      SAS/IML 13.1
+      SAS/QC 13.1
+
+NOTE: Additional host information:
+
+ X64_8PRO WIN 6.2.9200  Workstation
+
+NOTE: SAS initialization used:
+      real time           0.31 seconds
+      cpu time            0.24 seconds
+      
+1          resetline;
+1          ods html close;
+2          ods graphics off;
+3          ods listing;
+4          option linesize=128 pagesize=max;
+5          goption xpixels=640 ypixels=480 border;
+6          
+7          proc iml;
+NOTE: IML Ready
+8          	
+8        !  n=(1:100)`;
+9          	
+9        !  x=rannor(j(100,1,1));
+10         	
+10       !  y=x+rannor(j(100,1,1));
+11         	
+11       !  dataset=n||x||y;
+12         	
+12       !  create dataset(rename=(col1=n
+13         		col2=x
+14         		col3=y)) from dataset;
+15         	
+15       !  append from dataset;
+16         quit;
+NOTE: Exiting IML.
+NOTE: The data set WORK.DATASET has 100 observations and 3 variables.
+NOTE: PROCEDURE IML used (Total process time):
+      real time           0.02 seconds
+      cpu time            0.01 seconds
+      
+
+17         
+18         proc export data=dataset
+19         	outfile="C:\Users\junyong\Desktop\171128sasbatch.csv"
+20         	replace;
+21         run;
+
+22          /**********************************************************************
+23          *   PRODUCT:   SAS
+24          *   VERSION:   9.4
+25          *   CREATOR:   External File Interface
+26          *   DATE:      07MAR18
+27          *   DESC:      Generated SAS Datastep Code
+28          *   TEMPLATE SOURCE:  (None Specified.)
+29          ***********************************************************************/
+30             data _null_;
+31             %let _EFIERR_ = 0; /* set the ERROR detection macro variable */
+32             %let _EFIREC_ = 0;     /* clear export record count macro variable */
+33             file 'C:\Users\junyong\Desktop\171128sasbatch.csv' delimiter=',' DSD DROPOVER lrecl=32767;
+34             if _n_ = 1 then        /* write column names or labels */
+35              do;
+36                put
+37                   "n"
+38                ','
+39                   "x"
+40                ','
+41                   "y"
+42                ;
+43              end;
+44            set  DATASET   end=EFIEOD;
+45                format n best12. ;
+46                format x best12. ;
+47                format y best12. ;
+48              do;
+49                EFIOUT + 1;
+50                put n @;
+51                put x @;
+52                put y ;
+53                ;
+54              end;
+55             if _ERROR_ then call symputx('_EFIERR_',1);  /* set ERROR detection macro variable */
+56             if EFIEOD then call symputx('_EFIREC_',EFIOUT);
+57             run;
+
+NOTE: The file 'C:\Users\junyong\Desktop\171128sasbatch.csv' is:
+      Filename=C:\Users\junyong\Desktop\171128sasbatch.csv,
+      RECFM=V,LRECL=32767,File Size (bytes)=0,
+      Last Modified=07Mar2018:16:03:58,
+      Create Time=07Mar2018:16:01:19
+
+NOTE: 101 records were written to the file 'C:\Users\junyong\Desktop\171128sasbatch.csv'.
+      The minimum record length was 5.
+      The maximum record length was 29.
+NOTE: There were 100 observations read from the data set WORK.DATASET.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      cpu time            0.01 seconds
+      
+
+100 records created in C:\Users\junyong\Desktop\171128sasbatch.csv from DATASET.
+  
+  
+NOTE: "C:\Users\junyong\Desktop\171128sasbatch.csv" file was successfully created.
+NOTE: PROCEDURE EXPORT used (Total process time):
+      real time           0.06 seconds
+      cpu time            0.06 seconds
+      
+
+58         
+59         quit;
+
+NOTE: SAS Institute Inc., SAS Campus Drive, Cary, NC USA 27513-2414
+NOTE: The SAS System used:
+      real time           0.53 seconds
+      cpu time            0.34 seconds
+      

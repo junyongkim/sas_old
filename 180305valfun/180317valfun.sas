@@ -1,0 +1,70 @@
+resetline;
+option linesize=128 pagesize=max;
+goption xpixels=640 ypixels=480 border ftext="Courier New" htext=1.8;
+
+proc iml;
+	sigma=1.5;
+	delta=0.1;
+	beta=0.95;
+	alpha=0.30;
+	nbk=1000;
+	crit=1;
+	epsi=1e-6;
+	ks=((1-beta*(1-delta))/(alpha*beta))**(1/(alpha-1));
+	dev=0.9;
+	kmin=(1-dev)*ks;
+	kmax=(1+dev)*ks;
+	dk=(kmax-kmin)/(nbk-1);
+	do i=1 to nbk;
+		if i=1 then kgrid=kmin;
+		else kgrid=kgrid//(kgrid[i-1]+dk);
+	end;
+	v=j(nbk,1,0);
+	tv=j(nbk,1,0);
+	dr=j(nbk,1,0);
+	iter=0;
+	do while(crit>epsi);
+		do i=1 to nbk;
+			tmp=(kgrid[i]**alpha+(1-delta)*kgrid[i]-kmin);
+			imax=min(floor(tmp/dk)+1,nbk);
+			c=kgrid[i]**alpha+(1-delta)*kgrid[i]-kgrid[1:imax];
+			util=(c##(1-sigma)-1)/(1-sigma);
+			value=util+beta*v[1:imax];
+			tv[i]=max(value);
+			do j=1 to imax;
+				if value[j]=tv[i] then dr[i]=j;
+			end;
+		end;
+		crit=max(abs(tv-v));
+		v=tv;
+		iter=iter+1;
+	end;
+	kp=j(nbk,1);
+	do i=1 to nbk;
+		kp[i]=kgrid[dr[i]];
+	end;
+	c=kgrid##alpha+(1-delta)*kgrid-kp;
+	util=(c##(1-sigma)-1)/(1-sigma);
+	valfun=kgrid||kp||c||v;
+	create valfun(rename=(col1=kgrid
+		col2=kp
+		col3=c
+		col4=v)) from valfun;
+	append from valfun;
+	print iter;
+quit;
+
+symbol1 i=join ci=cx00ff00 w=2;
+symbol2 i=join ci=black;
+axis1 label=(angle=90 "Value function") order=(-4 to 4 by 2) minor=none offset=(0,0);
+axis2 label=(angle=90 "k(t+1)") order=(0 to 5 by 1) minor=none offset=(0,0);
+axis3 label=(angle=90 "Consumption") order=(0 to 2 by 0.5) minor=none offset=(0,0);
+axis4 label=("k(t)") order=(0 to 5 by 1) minor=none offset=(0,0);
+proc gplot data=valfun;
+	plot v*kgrid/vaxis=axis1 haxis=axis4;
+	plot (kp kgrid)*kgrid/overlay vaxis=axis2 haxis=axis4;
+	plot c*kgrid/vaxis=axis3 haxis=axis4;
+run;
+symbol;
+
+quit;

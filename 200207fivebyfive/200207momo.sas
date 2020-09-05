@@ -1,0 +1,115 @@
+/*------------------------------------------------
+200207momo
+deviates a bit from /sas/decile/ret.sas
+------------------------------------------------*/
+
+%let wrds=wrds.wharton.upenn.edu 4016;
+signon wrds username=_prompt_;
+rsubmit;
+
+proc expand data=crsp.msf(keep=permno date ret) out=ret(where=(ret));
+	by permno;
+	id date;
+	convert ret/method=none tout=(lag 6 +1 nomiss movprod 6 -1 trimleft 5);
+	convert ret=re/method=none tout=(lag 1 +1 nomiss movprod 5 -1 trimleft 4);
+proc sql;
+	create table exchcd as select permno,namedt,case when namedt<max(namedt) then nameendt else intnx("mon",nameendt,1)-1 end as nameendt,exchcd from crsp.msenames where 9<shrcd<12 group by permno;
+	create table rank as select a.*,exchcd from ret a join exchcd b on a.permno=b.permno and namedt<=date<=nameendt order by date;
+quit;
+
+proc univariate noprint;
+	where exchcd=1;
+	by date;
+	var ret re;
+	output pctlpre=ret re pctlpts=20 40 60 80 out=break;
+data rank;
+	merge rank break;
+	by date;
+	if re>re80 then do;
+		if ret>ret80 then rank=25;
+		else if ret>ret60 then rank=24;
+		else if ret>ret40 then rank=23;
+		else if ret>ret20 then rank=22;
+		else if ret>. then rank=21;
+	end;
+	else if re>re60 then do;
+		if ret>ret80 then rank=20;
+		else if ret>ret60 then rank=19;
+		else if ret>ret40 then rank=18;
+		else if ret>ret20 then rank=17;
+		else if ret>. then rank=16;
+	end;
+	else if re>re40 then do;
+		if ret>ret80 then rank=15;
+		else if ret>ret60 then rank=14;
+		else if ret>ret40 then rank=13;
+		else if ret>ret20 then rank=12;
+		else if ret>. then rank=11;
+	end;
+	else if re>re20 then do;
+		if ret>ret80 then rank=10;
+		else if ret>ret60 then rank=9;
+		else if ret>ret40 then rank=8;
+		else if ret>ret20 then rank=7;
+		else if ret>. then rank=6;
+	end;
+	else if re>. then do;
+		if ret>ret80 then rank=5;
+		else if ret>ret60 then rank=4;
+		else if ret>ret40 then rank=3;
+		else if ret>ret20 then rank=2;
+		else if ret>. then rank=1;
+	end;
+	keep permno date rank;
+proc sql;
+	create table retm as select a.permno,a.date as date label="",ret*100 as ret format=best8.,abs(prc)*shrout/(1+ret) as size,rank from crsp.msf a join rank b on a.permno=b.permno and intnx("mon",a.date,0)=intnx("mon",b.date,1) where ret>.z and prc and shrout and rank order by date,rank;
+	create table retd as select a.permno,a.date as date label="",ret*100 as ret format=best8.,abs(prc)*shrout/(1+ret) as size,rank from crsp.dsf a join rank b on a.permno=b.permno and intnx("mon",a.date,0)=intnx("mon",b.date,1) where ret>.z and prc and shrout and rank order by date,rank;
+quit;
+
+proc means data=retm noprint;
+	by date rank;
+	var ret;
+	output out=retme mean=;
+proc transpose prefix=retme out=retme(drop=_:);
+	by date;
+	id rank;
+	var ret;
+proc means data=retm noprint;
+	by date rank;
+	var ret;
+	weight size;
+	output out=retm mean=;
+proc transpose prefix=retm out=retm(drop=_:);
+	by date;
+	id rank;
+	var ret;
+data retm;
+	merge retm retme;
+proc download;
+proc means data=retd noprint;
+	by date rank;
+	var ret;
+	output out=retde mean=;
+proc transpose prefix=retde out=retde(drop=_:);
+	by date;
+	id rank;
+	var ret;
+proc means data=retd noprint;
+	by date rank;
+	var ret;
+	weight size;
+	output out=retd mean=;
+proc transpose prefix=retd out=retd(drop=_:);
+	by date;
+	id rank;
+	var ret;
+data retd;
+	merge retd retde;
+proc download;
+run;
+
+endrsubmit;
+
+proc export data=retm replace file="!userprofile\desktop\momom.csv";
+proc export data=retd replace file="!userprofile\desktop\momod.csv";
+run;
