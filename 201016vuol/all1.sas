@@ -155,8 +155,8 @@ BACKFILLS MISSING BOOK-TO-MARKETS
 COMPUTES ROES AND LEVERAGES
 ***************************************/
 	create table funda2 as
-		select i.*,
-			max(coalesce(i.ni,i.book3-j.book3+i.dv),-j.book3)/j.book3 as roe,
+		select i.*,ifn(i.ni>. | i.book3-j.book3+i.dv>.,
+			max(coalesce(i.ni,i.book3-j.book3+i.dv),-j.book3)/j.book3,.) as roe,
 			i.book3/sum(i.book3,i.dlc,i.dltt,i.pstk) as leverage
 		from funda2 i left join funda2 j on i.gvkey=j.gvkey & i.fyear=j.fyear+1
 		order by gvkey,fyear;
